@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Sample
 {
@@ -13,6 +14,10 @@ namespace Sample
 
     public class MessageModel
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Key { get; set; }
+
         [DisplayName("ハンドル名")]
         [Required(ErrorMessage = "ハンドル名を入力してください。")]
         [MaxLength(20, ErrorMessage = "ハンドル名が長すぎます。")]
