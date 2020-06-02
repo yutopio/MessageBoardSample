@@ -1,0 +1,13 @@
+pool:
+  vmImage: 'windows-2019'
+
+steps:
+- task: Docker@2
+  inputs:
+    containerRegistry: 'acr'
+    repository: '$(Build.SourceBranchName)'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
+    tags: |
+      $(Build.BuildId)
+      latest
