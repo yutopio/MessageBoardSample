@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+JP" rel="stylesheet">
 </head>
-<body>
+<body style="font-family: 'Noto Sans JP'">
     <div class="navbar navbar-dark bg-dark">
         <div class="container">
             <span class="navbar-brand">
@@ -16,6 +18,11 @@
     </div>
     <div class="container body-content">
         @RenderBody()
+        <hr />
+        <footer>
+            <p>このアプリケーションは @Environment.OSVersion で .NET @Environment.Version で動作しています。</p>
+            <p>&copy; 2020 - Yuto Takei</p>
+        </footer>
     </div>
 </body>
 </html>

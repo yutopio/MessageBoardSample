@@ -1,7 +1,55 @@
+@model IndexModel
 @{
-    ViewBag.Title = "Hello world!";
+    ViewBag.Title = "メッセージ ボード サンプル";
+}
+
+@if (!ViewContext.ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger" role="alert">
+        @Html.ValidationSummary(false)
+    </div>
+}
+else if (ViewBag.Posted ?? false)
+{
+    <div class="alert alert-success" role="alert">
+        <strong>投稿できました。</strong> ありがとうございます。
+    </div>
 }
 
 <div class="jumbotron">
-    <h1>@ViewBag.Title</h1>
+    <h1>メッセージをどうぞ！</h1>
+    @using (Html.BeginForm())
+    {
+        <div class="form-group mb-2 mr-sm-2">
+            @Html.LabelFor(x => x.Input.Message, new { @class = "sr-only" })
+            @Html.TextAreaFor(x => x.Input.Message, new { @class = "form-control", maxlength = 140, placeholder = "今日はどんな天気？" })
+        </div>
+
+        <div class="form-inline">
+            @Html.LabelFor(x => x.Input.Username, new { @class = "sr-only" })
+            <div class="input-group mb-2 mr-sm-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">@@</span>
+                </div>
+                @Html.TextBoxFor(x => x.Input.Username, new { @class = "form-control", maxlength = 20, placeholder = "ハンドル名" })
+            </div>
+            <button type="submit" class="btn btn-primary mb-2"><i class="fa fa-paper-plane mr-2" aria-hidden="true"></i>送信</button>
+        </div>
+    }
+</div>
+
+<div class="card-columns">
+    @if (Model != null && Model.Posted != null)
+    {
+        foreach (var post in Model.Posted.OrderByDescending(x => x.Posted))
+        {
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">@@@post.Username さん</h4>
+                    <p class="card-text">@post.Message</p>
+                    <p class="card-text"><small class="text-muted">@post.Posted</small></p>
+                </div>
+            </div>
+        }
+    }
 </div>
