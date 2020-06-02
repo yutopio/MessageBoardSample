@@ -1,0 +1,11 @@
+# directories
+**/.git/
+**/packages/
+**/bin/
+**/obj/
+**/out/
+
+# files
+Dockerfile*
+*.md
+LICENSE
