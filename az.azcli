@@ -1,0 +1,50 @@
+$RESOURCE_GROUP_NAME = 'msgboard'
+$REGISTRY_NAME = 'msgboard'
+$CLUSTER_NAME = 'msgboard-cluster'
+$LOCATION = 'japaneast'
+
+# リソース グループを作成する。
+az group create -l $LOCATION -n $RESOURCE_GROUP_NAME
+
+# Azure Container Registry (ACR) のインスタンスを作成する。
+$ACR_ID = az acr create -g $RESOURCE_GROUP_NAME -n $REGISTRY_NAME --sku Basic --query "id"
+
+# プレビューではない最新の Kubernetes のバージョンを取得する。
+$CLUSTER_VERSION = az aks get-versions -l $LOCATION --query "reverse(sort(orchestrators[?!isPreview].orchestratorVersion ))[0]"
+
+# Azure Kubernetes Service (AKS) のインスタンスを作成する。
+# * デフォルトのノード プールは linux という名前で Standard_D2s_v3 を 1 ノード
+# * ネットワーク プラグインに Azure を利用
+# * Managed Identity を有効化 (Service Principal をシステムで自動的に作成する)
+# * 仮想マシン スケール セットを利用 (複数ノードプールを利用する場合に必須)
+# * 先程の ACR に AcrPull のロールをアタッチ
+# * Azure Monitor にテレメトリ情報を送信
+az aks create -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME `
+    --kubernetes-version $CLUSTER_VERSION `
+    --nodepool-name linux `
+    --node-count 1 `
+    --node-vm-size Standard_D2s_v3 `
+    --network-plugin azure `
+    --network-policy azure `
+    --enable-managed-identity `
+    --vm-set-type VirtualMachineScaleSets `
+    --attach-acr $ACR_ID `
+    --enable-addons monitoring
+
+# Windows ノード プールを追加する。
+az aks nodepool add -g $RESOURCE_GROUP_NAME --cluster-name $CLUSTER_NAME -n win --os-type Windows --node-count 1 -s Standard_D2s_v3
+
+# ローカルの .kube/config に Kubernetes の接続設定を追加する。
+az aks get-credentials -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME
+
+# ダッシュボードの情報を正しく見るため、kubernetes-dashboard サービス アカウントにクラスタ管理のロールを認可する。
+# https://docs.microsoft.com/azure/aks/kubernetes-dashboard
+kubectl delete clusterrolebinding kubernetes-dashboard
+kubectl create clusterrolebinding kubernetes-dashboard --clusterrole=cluster-admin --serviceaccount=kube-system:kubernetes-dashboard --user=clusterUser
+
+# Kubernetes ダッシュボードを表示する。
+az aks browse -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME
+
+# Virtual Kubelet をインストールする。
+az aks install-connector -g $RESOURCE_GROUP_NAME -n $CLUSTER_NAME `
+    --connector-name virtual-kubelet --os-type Both
