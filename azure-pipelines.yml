@@ -11,3 +11,24 @@ steps:
     tags: |
       $(Build.BuildId)
       latest
+- task: HelmInstaller@0
+  inputs:
+    helmVersion: 3.2.4
+- task: HelmDeploy@0
+  inputs:
+    connectionType: None
+    command: repo
+    arguments: 'add ingress-nginx https://kubernetes.github.io/ingress-nginx'
+- task: HelmDeploy@0
+  inputs:
+    connectionType: None
+    command: repo
+    arguments: 'update'
+- task: HelmDeploy@0
+  inputs:
+    connectionType: None
+    command: dependency
+    arguments: 'build chart'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: chart

@@ -1,0 +1,56 @@
+{{- if .Values.nginx.create -}}
+apiVersion: apps/v1
+kind: Deployment
+{{- $fullName := include "msgboard.fullname" . }}
+metadata:
+  name: {{ $fullName }}-nginx
+  labels:
+    {{- include "msgboard.labels" . | nindent 4 }}
+    app.kubernetes.io/component: reverse-proxy
+spec:
+  replicas: {{ .Values.nginx.replicas }}
+  selector:
+    matchLabels:
+      {{- include "msgboard.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: reverse-proxy
+  template:
+    metadata:
+      labels:
+        {{- include "msgboard.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: reverse-proxy
+    spec:
+      serviceAccountName: {{ include "msgboard.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}-nginx
+          image: {{ .Values.nginx.image }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.nginx.resources | nindent 12 }}
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+              readOnly: true
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: {{ $fullName }}-nginx
+            defaultMode: 0444
+      restartPolicy: Always
+      nodeSelector:
+        kubernetes.io/os: linux
+      {{- with .Values.nginx.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+      {{- end -}}
+{{- end -}}

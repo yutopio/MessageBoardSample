@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+{{- $fullName := include "msgboard.fullname" . }}
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "msgboard.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "msgboard.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: controller
+  template:
+    metadata:
+      labels:
+        {{- include "msgboard.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: controller
+    spec:
+      {{- with .Values.msgboard.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "msgboard.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.msgboard.image.repository }}:{{ .Values.msgboard.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.msgboard.image.pullPolicy }}
+          env:
+            - name: MessageBoardModel
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}-mssql-connection-string
+                  key: connection-string
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.msgboard.resources | nindent 12 }}
+      nodeSelector:
+        kubernetes.io/os: windows
+      {{- with .Values.msgboard.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+      {{- end -}}

@@ -4,8 +4,10 @@
 **/bin/
 **/obj/
 **/out/
+**/chart/
 
 # files
 Dockerfile*
 *.md
 LICENSE
+azure-pipelines.yml

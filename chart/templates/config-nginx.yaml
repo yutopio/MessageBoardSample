@@ -1,0 +1,10 @@
+{{- if .Values.nginx.create -}}
+apiVersion: v1
+kind: ConfigMap
+{{- $fullName := include "msgboard.fullname" . }}
+metadata:
+  name: {{ $fullName }}-nginx
+data:
+  nginx.conf: |-
+    {{- tpl (.Files.Get "nginx.conf") . | nindent 4 }}
+{{- end -}}

@@ -1,0 +1,101 @@
+# Helm チャートの既定値を設定します。
+
+nameOverride: ""
+fullnameOverride: ""
+
+# アプリケーション本体の設定を指定します。
+msgboard:
+  # アプリケーションのイメージを保存しているレポジトリを指定しています。
+  # タグを指定しない場合は、Chart.yaml のアプリケーション バージョンが使われます。
+  image:
+    repository: yutotakei/msgboard
+    pullPolicy: IfNotPresent
+    tag: latest
+  imagePullSecrets: []
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+  nodeSelector: {}
+
+# 利用するデータベース サーバーの設定を指定します。
+mssql:
+  # 詳細は次のページを参照: https://hub.docker.com/_/microsoft-mssql-server
+  # イメージ名、ライセンスに同意するか否か、PID を指定します。PID が空の場合は Developer Edition になります。
+  image: mcr.microsoft.com/mssql/server:2019-CU5-ubuntu-16.04
+  ACCEPT_EULA: "Y"
+  MSSQL_PID: ""
+
+  # 最低でも 2GB 以上のメモリが必要とされています。
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+  # 最低でも 2GB 以上のストレージ容量が必要とされています。
+  storage:
+    # AKS 上での PVC の作成は次のページを参照:
+    # https://docs.microsoft.com/azure/aks/azure-disks-dynamic-pv#create-a-persistent-volume-claim
+    className: managed-premium
+    size: 5Gi
+
+  # データベースのパスワードを決定します。
+  credential:
+    username: sa
+    password: Answer-To-Life.42
+
+  nodeSelector: {}
+
+nginx:
+  create: false
+  replicas: 2
+  image: nginx:1.17.10-alpine
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+  nodeSelector: {}
+
+service:
+  type: LoadBalancer
+  port: 80
+
+# サービス アカウントを作成するか指定します。作成しない場合は default が用いられます。
+# Kubernetes におけるサービス アカウントについては次のページを参照:
+# https://docs.microsoft.com/azure/aks/concepts-identity#kubernetes-service-accounts
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  host: msgboard.test
+  tls:
+    certificate: ""
+    key: ""
+
+# 以下は、依存関係にある Nginx Ingress Controller で、Linux ノードに Pod を配置するために必要。
+ingress-nginx:
+  controller:
+    nodeSelector:
+      kubernetes.io/os: linux
+    admissionWebhooks:
+      patch:
+        nodeSelector:
+          kubernetes.io/os: linux
